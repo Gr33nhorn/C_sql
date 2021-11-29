@@ -17,7 +17,7 @@ int main(void) {
 		return 1;
 	}
 		
-		
+	//sqlite3_exec primer	
 	void* data = "Callback function called";
 	
 	
@@ -38,11 +38,31 @@ int main(void) {
   		
   		sqlite3_free(err_msg);
   		sqlite3_close(db);
-  		
-  		return 1;
+  		  		return 1;
   	}
   	
   	sqlite3_close(db);
+  		
+  		//sqlite3_get_table primer
+  		int n;
+  		int m;
+  		char* zError;
+  		char** result;
+  		char* sql2 = "select * from Placila;";
+  		rc = sqlite3_get_table(db, sql2, &result, &n, &m, &zError);
+
+  		printf("%d", n);
+  		//fprintf(stderr, "%s", zError);
+  		for(int i = 0; i <n; i++){
+  			for(int j; j < m; j++) {
+  				printf( "%s", "ciganija");
+  			}
+  		}
+  		sqlite3_free_table(result);
+  		sqlite3_free(zError);
+  		sqlite3_close(db);
+  		
+
   	
     return 0;
 }
@@ -52,7 +72,7 @@ int callback(void* data, int ncols, char** values, char** headers)
 	int i;
 	fprintf(stderr, "%s: ", (const char*)data);
 	for(i = 0; i < ncols; i++){
-		fprintf(stdout, "%s=%s ", headers[i], values[i]);
+		fprintf(stderr, "#%s = %s ", headers[i], values[i]);
 	}
 	fprintf(stderr, "\n");
 	return 0;
