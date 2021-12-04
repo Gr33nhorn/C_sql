@@ -1,79 +1,96 @@
 #include <sqlite3.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-int callback(void*data, int ncols, char** values, char** headers);
 
 int main(void) {
-    
-	sqlite3 *db;
-	char *err_msg = 0;
-	
-	int rc = sqlite3_open("test.db", &db);
-	
-	if(rc != SQLITE_OK){
-		fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
-		sqlite3_close(db);
-		
-		return 1;
-	}
-		
-	//sqlite3_exec primer	
-	void* data = "Callback function called";
-	
-	
-	char* sql = "DROP TABLE IF EXISTS Placila;"
-				"CREATE TABLE Placila(Id INT, Name TEXT, Znesek DOUBLE);"
-				"INSERT INTO Placila VALUES(1, 'REDNO DELO I. IZMENA - IZHODIŠČE PO KP', 453.32);"
-  				"INSERT INTO Placila VALUES(2, 'REDNO DELO II. IZMENA - IZHODIŠČE PO KP', 442.12);"
-  				"INSERT INTO Placila VALUES(3, 'LETNI DOPUST', 52.52);"
-  				"INSERT INTO Placila VALUES(4, 'RAZLIKA DO MINIMALNE PLAČE', 80.03);"
-  				"INSERT INTO Placila VALUES(5, '10% DODATEK - izmensko delo', 44.21);"
-  				"INSERT INTO Placila VALUES(6, 'DELOVNA USPEŠNOST - znesek', 321.36);"
-  				"SELECT * FROM Placila;";
-  				
-  	rc = sqlite3_exec(db, sql, callback, data, &err_msg);
-  	
-  	if(rc != SQLITE_OK){
-  		fprintf(stderr, "SQL error: %s\n", err_msg);
-  		
-  		sqlite3_free(err_msg);
-  		sqlite3_close(db);
-  		  		return 1;
-  	}
-  	
-  	sqlite3_close(db);
-  		
-  		//sqlite3_get_table primer
-  		int n;
-  		int m;
-  		char* zError;
-  		char** result;
-  		char* sql2 = "select * from Placila;";
-  		rc = sqlite3_get_table(db, sql2, &result, &n, &m, &zError);
 
-  		printf("%d", n);
-  		//fprintf(stderr, "%s", zError);
-  		for(int i = 0; i <n; i++){
-  			for(int j; j < m; j++) {
-  				printf( "%s", "ciganija");
-  			}
-  		}
-  		sqlite3_free_table(result);
-  		sqlite3_free(zError);
-  		sqlite3_close(db);
-  		
+if( sqlite3_initialize() != SQLITE_OK )
+	exit(-1);
+		
 
-  	
-    return 0;
+char* ime = "Place.db";
+sqlite3* db;
+int r;
+
+
+r = sqlite3_open_v2(ime, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL );
+
+if( r != SQLITE_OK ){
+	printf("%s\n", sqlite3_errmsg(db));
+	sqlite3_close(db);
+	exit(-1);
+}	
+	
+sqlite3_stmt* stmt = NULL;
+char* sql = "CREATE TABLE IF NOT EXISTS Place(id int, ime text, znesek float)";
+
+r = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+
+if(r != SQLITE_OK){
+	printf("%s\n", sqlite3_errmsg(db));
+	exit(-1);
 }
 
-int callback(void* data, int ncols, char** values, char** headers)
-{
-	int i;
-	fprintf(stderr, "%s: ", (const char*)data);
-	for(i = 0; i < ncols; i++){
-		fprintf(stderr, "#%s = %s ", headers[i], values[i]);
+r = sqlite3_step(stmt);	
+if(r != SQLITE_DONE){
+	printf("%s\n", sqlite3_errmsg(db));
+	exit(-1);
+}
+
+sqlite3_finalize(stmt);
+
+
+stmt = NULL;
+sql = "INSERT INTO Place VALUES(0, 'placa', 950.0)";
+
+r = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+
+if(r != SQLITE_OK){
+	printf("%s\n", sqlite3_errmsg(db));
+	exit(-1);
+}
+
+r = sqlite3_step(stmt);	
+if(r != SQLITE_DONE){
+	printf("%s\n", sqlite3_errmsg(db));
+	exit(-1);
+}
+
+sqlite3_finalize(stmt);
+
+
+
+stmt = NULL;
+sql = "SELECT * FROM Place";
+
+r = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+
+if(r != SQLITE_OK){
+	printf("%s\n", sqlite3_errmsg(db));
+	exit(-1);
+}
+
+r = sqlite3_step(stmt);	
+if(r == SQLITE_ROW){
+	const char* data;
+	const char* data2;
+	for(int i = 0; i < 3; i++){
+	data = (const char*)sqlite3_column_text(stmt, i);
+	printf("%s\n", data ? data : "[NULL]");
 	}
-	fprintf(stderr, "\n");
-	return 0;
-	}
+	exit(-1);
+}
+
+sqlite3_finalize(stmt);
+
+
+
+
+
+
+sqlite3_close(db);
+sqlite3_shutdown();
+
+return 0;
+}
