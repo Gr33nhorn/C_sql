@@ -23,7 +23,7 @@ if( r != SQLITE_OK ){
 }	
 	
 sqlite3_stmt* stmt = NULL;
-char* sql = "CREATE TABLE IF NOT EXISTS Place(id int, ime text, znesek float)";
+char* sql = "CREATE TABLE IF NOT EXISTS Place(id int PRIMARY_KEY, ime text, znesek float)";
 
 r = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
 
@@ -42,15 +42,31 @@ sqlite3_finalize(stmt);
 
 
 stmt = NULL;
-sql = "INSERT INTO Place VALUES(0, 'placa', 950.0)";
+sql = "INSERT INTO Place (id, ime, znesek) VALUES(?1, ?2, ?3)";
 
 r = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
 
 if(r != SQLITE_OK){
+	printf("Po prepare!\n");
 	printf("%s\n", sqlite3_errmsg(db));
 	exit(-1);
 }
 
+int txt;
+int idx;
+int dbl;
+int i;
+char* a = malloc(sizeof(char)*10); 
+scanf("%d  %s", &i, a);
+
+idx = sqlite3_bind_int(stmt, 1, i);
+txt = sqlite3_bind_text(stmt, 2, a, -1, NULL);
+dbl = sqlite3_bind_int(stmt, 3, 950.0);
+
+if(txt != SQLITE_OK){
+	printf("%s\n", sqlite3_errmsg(db));
+	exit(-1);
+}
 r = sqlite3_step(stmt);	
 if(r != SQLITE_DONE){
 	printf("%s\n", sqlite3_errmsg(db));
@@ -70,18 +86,14 @@ if(r != SQLITE_OK){
 	printf("%s\n", sqlite3_errmsg(db));
 	exit(-1);
 }
-
-r = sqlite3_step(stmt);	
-if(r == SQLITE_ROW){
+while(sqlite3_step(stmt) != SQLITE_DONE){
 	const char* data;
-	const char* data2;
-	for(int i = 0; i < 3; i++){
+	for(int i = 0; i < sqlite3_column_count(stmt); i++){
 	data = (const char*)sqlite3_column_text(stmt, i);
-	printf("%s\n", data ? data : "[NULL]");
+	printf("%s: %s\n",sqlite3_column_name(stmt, i), data ? data : "[NULL]");
 	}
-	exit(-1);
-}
 
+}
 sqlite3_finalize(stmt);
 
 
